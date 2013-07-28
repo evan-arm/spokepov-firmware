@@ -67,33 +67,29 @@ volatile uint16_t sensor_timer;
 
 volatile uint8_t stopcomputertx = 0;
 
-SIGNAL (SIG_TIMER0_OVF) {
-  PORTB |= 0x1;
+ISR (TIMER0_OVF_vect) {
   if (hall_debounce != 0xFF)
     hall_debounce++;
   
   if (sensor_timer != 0xFFFF)
     sensor_timer++;
 
-  PORTB &= ~0x1;
 }
 
 volatile uint16_t curr_eeprom_addr = 0;
 // gets called once per pixel
 
 
-SIGNAL (SIG_OUTPUT_COMPARE1A) {
+ISR (OUTPUT_COMPARE1A_vect) {
   uint16_t eepromaddr;
+  uint16_t chase;
 
   sei();
-
-  PORTB |= 0x2;
 
   eepromaddr = curr_eeprom_addr;
 
   if (sensor_timer < ((F_CPU/NUM_PIXELS)/256 * STANDBY_TIMEOUT)) {    
     // less than ~5 seconds since last sensor
-    PORTA |= 0x1;
     eepromaddr %= NUM_PIXELS * 4;
     spieeprom_read_into_leds(eepromaddr + anim_eeprom_offset, FRONT);
     if (mirror) {
@@ -124,9 +120,7 @@ SIGNAL (SIG_OUTPUT_COMPARE1A) {
       //curr_eeprom_addr = eepromaddr;
     sei();
     
-    PORTA &= ~0x1;
   } else {
-    PORTA |= 0x2;
 
     // no signal for a while, go into chill mode
     // turn off this pixel timer
@@ -134,20 +128,25 @@ SIGNAL (SIG_OUTPUT_COMPARE1A) {
     TCCR1B &= ~0x7;
     sei();
 
-    // turn off all but one LED
-    set_led(2, FRONT);
-    set_led(2, BACK);
 
-    PORTA &= ~0x2;
+    // start LED chaser sequence for ~90 sec, then turn all off
+    clear_both_leds();
+
+    for (chase = 10; chase < 1800; chase++) {
+        fleds[((chase%30)/8)] &= ~(_BV((chase%30)%8));
+        fleds[(((chase-10)%30)/8)] |= _BV(((chase-10)%30)%8);
+        clock_both_leds();
+        delay_ms(50);
+    }
+    clear_both_leds();
+
   }
 
-  PORTB &= ~0x2;
 }
 
-SIGNAL (SIG_INT0) {
+ISR (INT0_vect) {
   uint16_t timer;
 
-  PORTB |= 0x4;
   timer = 0;
   while (! (BUTTON_PIN & _BV(BUTTON))) {
     // while button is still held down
@@ -166,11 +165,9 @@ SIGNAL (SIG_INT0) {
       sensor_timer = 0xFFFF;
     }
   }
-  PORTB &= ~0x4;
 }
 
-SIGNAL (SIG_INT1) {
-  PORTB |= 0x8;
+ISR (INT1_vect) {
 
   if (hall_debounce > HALL_DEBOUNCE_THRESH) {
     stopcomputertx = 1;
@@ -208,7 +205,6 @@ SIGNAL (SIG_INT1) {
     sensor_timer = 0;
   }
   hall_debounce = 0;
-  PORTB &= ~0x8;
 }
 
 void ioinit(void) {
@@ -276,6 +272,18 @@ void clock_leds(uint8_t select) {
   LATCH_SELECT_PORT |= _BV(select);
   NOP; NOP; NOP; NOP;
   LATCH_SELECT_PORT &= ~_BV(select);
+}
+
+void clock_both_leds() {
+  clock_leds(FRONT);
+  LATCH_SELECT_PORT |= _BV(BACK);
+  NOP; NOP; NOP; NOP;
+  LATCH_SELECT_PORT &= ~_BV(BACK);
+}
+
+void clear_both_leds() {
+  fleds[0] = fleds[1] = fleds[2] = fleds[3] = 0xFF;
+  clock_both_leds();
 }
 
 void set_led(uint8_t led, uint8_t side) {
@@ -402,8 +410,7 @@ int main(void) {
       // no interrupts until we're done
       cli();
       // turn off all LEDs
-      set_led(0, FRONT);
-      set_led(0, BACK);
+      clear_both_leds();
       
       // turn off sensor
       SENSOR_PORT &= ~_BV(SENSORPOWER);

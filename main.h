@@ -73,3 +73,7 @@ void set_led(uint8_t led, uint8_t side);
 void go_to_sleep(void);
 
 void delay_ms(unsigned char ms);
+
+void clock_both_leds();
+
+void clear_both_leds();
