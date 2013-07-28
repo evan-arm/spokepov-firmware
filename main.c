@@ -67,7 +67,7 @@ volatile uint16_t sensor_timer;
 
 volatile uint8_t stopcomputertx = 0;
 
-SIGNAL (SIG_TIMER0_OVF) {
+ISR (TIMER0_OVF_vect) {
   PORTB |= 0x1;
   if (hall_debounce != 0xFF)
     hall_debounce++;
@@ -82,7 +82,7 @@ volatile uint16_t curr_eeprom_addr = 0;
 // gets called once per pixel
 
 
-SIGNAL (SIG_OUTPUT_COMPARE1A) {
+ISR (TIMER1_COMPA_vect) {
   uint16_t eepromaddr;
 
   sei();
