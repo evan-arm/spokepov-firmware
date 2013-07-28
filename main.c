@@ -80,7 +80,7 @@ volatile uint16_t curr_eeprom_addr = 0;
 // gets called once per pixel
 
 
-ISR (OUTPUT_COMPARE1A_vect) {
+ISR (TIMER1_COMPA_vect) {
   uint16_t eepromaddr;
   uint16_t chase;
 
