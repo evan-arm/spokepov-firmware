@@ -132,11 +132,11 @@ ISR (TIMER1_COMPA_vect) {
     // start LED chaser sequence for ~90 sec, then turn all off
     clear_both_leds();
 
-    for (chase = 10; chase < 1800; chase++) {
-        fleds[((chase%30)/8)] &= ~(_BV((chase%30)%8));
-        fleds[(((chase-10)%30)/8)] |= _BV(((chase-10)%30)%8);
+    for (chase = 3000; chase > 0; chase--) {
+        fleds[((chase%32)/8)] &= ~(_BV((chase%32)%8));
+        fleds[(((chase+10)%32)/8)] |= _BV(((chase+10)%32)%8);
         clock_both_leds();
-        delay_ms(50);
+        delay_ms(30);
     }
     clear_both_leds();
 
@@ -274,14 +274,14 @@ void clock_leds(uint8_t select) {
   LATCH_SELECT_PORT &= ~_BV(select);
 }
 
-void clock_both_leds() {
+void clock_both_leds(void) {
   clock_leds(FRONT);
   LATCH_SELECT_PORT |= _BV(BACK);
   NOP; NOP; NOP; NOP;
   LATCH_SELECT_PORT &= ~_BV(BACK);
 }
 
-void clear_both_leds() {
+void clear_both_leds(void) {
   fleds[0] = fleds[1] = fleds[2] = fleds[3] = 0xFF;
   clock_both_leds();
 }

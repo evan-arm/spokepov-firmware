@@ -74,6 +74,6 @@ void go_to_sleep(void);
 
 void delay_ms(unsigned char ms);
 
-void clock_both_leds();
+void clock_both_leds(void);
 
-void clear_both_leds();
+void clear_both_leds(void);
