@@ -1,0 +1,22 @@
+SpokePOV Firmware
+
+This is the source code for the firmware for the Adafruit SpokePOV kit:
+
+http://www.ladyada.net/make/spokepov/index.html
+
+The SpokePOV uses an Atmel ATtiny2313.
+
+This repo is based off of the Adafruit 1.01 code release: 
+http://www.ladyada.net/make/spokepov/download.html
+
+I've updated the firmware to compile with recent avr-libc; in particular, I've
+updated the signal handlers to use the new ISR macro convention.
+
+There are two branches:  
+
+master is the Adafruit source, updated to use new ISR conventions.
+ 
+chase is modified to run a "chasing" light pattern along the line of the spoke
+whenever the wheel stops turning. The lights cycle for about 90 seconds. It
+also adjusts the code to actually turn the lights completely off after some
+inactivity.
