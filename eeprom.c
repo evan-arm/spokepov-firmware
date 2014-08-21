@@ -75,7 +75,7 @@ uint8_t spieeprom_write(uint16_t addr, uint8_t *data, uint8_t len) {
 }
 
 void spieeprom_read(uint16_t addr, uint8_t *buff, uint8_t len) {
-  uint8_t data, i;
+  uint8_t i;
 
   SPIEE_CS_PORT &= ~_BV(SPIEE_CS); // pull CS low
   NOP; NOP; NOP; NOP;
